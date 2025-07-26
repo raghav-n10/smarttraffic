@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartTraffic - Live Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --st-primary: #2c3e50;
+            --st-secondary: #3498db;
+            --st-accent: #e74c3c;
+            --st-light: #ecf0f1;
+            --st-dark: #2c3e50;
+            --st-success: #2ecc71;
+            --st-warning: #f39c12;
+            --st-danger: #e74c3c;
+            --st-info: #3498db;
+            --st-text: #333;
+            --st-text-light: #7f8c8d;
+            --st-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --st-transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--st-text);
+            line-height: 1.6;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Navigation Bar */
+        .st-navbar {
+            background-color: white;
+            box-shadow: var(--st-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 0.8rem 0;
+        }
+
+        .st-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .st-navbar .st-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .st-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--st-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .st-logo span {
+            color: var(--st-secondary);
+        }
+
+        .st-logo i {
+            font-size: 1.5rem;
+            color: var(--st-secondary);
+        }
+
+        .st-nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            transition: var(--st-transition);
+        }
+
+        .st-nav-links a {
+            font-weight: 500;
+            transition: var(--st-transition);
+            padding: 0.5rem 0;
+            position: relative;
+            color: var(--st-primary);
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .st-nav-links a:hover {
+            color: var(--st-secondary);
+        }
+
+        .st-nav-links a.st-active {
+            color: var(--st-secondary);
+            font-weight: 600;
+        }
+
+        .st-nav-links a.st-active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--st-secondary);
+            transform-origin: left;
+            animation: st-underline 0.3s ease forwards;
+        }
+
+        .st-login-btn {
+            background-color: var(--st-secondary);
+            color: white !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 5px;
+            transition: var(--st-transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .st-login-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(41, 128, 185, 0.3);
+        }
+
+        .st-hamburger {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+
+        .st-hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: var(--st-primary);
+            margin: 5px 0;
+            transition: var(--st-transition);
+            transform-origin: center;
+        }
+        
+        .st-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--st-transition);
+        }
+        
+        .st-nav-overlay.st-active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Animations */
+        @keyframes st-underline {
+            from {
+                transform: scaleX(0);
+            }
+            to {
+                transform: scaleX(1);
+            }
+        }
+
+        /* Map Container */
+        .map-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+            height: calc(100vh - 60px);
+            z-index: 1;
+        }
+
+        /* Map Controls */
+        .map-controls {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background-color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: var(--st-shadow);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--st-transition);
+            width: 40px;
+            height: 40px;
+        }
+
+        .control-btn:hover {
+            background-color: var(--st-secondary);
+            color: white;
+        }
+
+        .search-container {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            z-index: 1000;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: var(--st-shadow);
+            width: 300px;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            z-index: 1000;
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: var(--st-shadow);
+            font-size: 14px;
+        }
+
+        .legend h4 {
+            margin-bottom: 10px;
+            color: var(--st-primary);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Custom Marker Icons */
+        .signal-icon {
+            background-color: white;
+            border-radius: 50%;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signal-icon.red {
+            color: var(--st-danger);
+        }
+
+        .signal-icon.yellow {
+            color: var(--st-warning);
+        }
+
+        .signal-icon.green {
+            color: var(--st-success);
+        }
+
+        .accident-icon {
+            color: var(--st-danger);
+            background-color: white;
+            border-radius: 50%;
+            padding: 5px;
+        }
+
+        .construction-icon {
+            color: var(--st-warning);
+            background-color: white;
+            border-radius: 50%;
+            padding: 5px;
+        }
+
+        /* Popup Styles */
+        .leaflet-popup-content {
+            min-width: 200px;
+        }
+
+        .popup-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--st-primary);
+        }
+
+        .popup-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-red {
+            background-color: var(--st-danger);
+            color: white;
+        }
+
+        .status-yellow {
+            background-color: var(--st-warning);
+            color: white;
+        }
+
+        .status-green {
+            background-color: var(--st-success);
+            color: white;
+        }
+
+        .popup-details {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .popup-details p {
+            margin-bottom: 5px;
+        }
+
+        .popup-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: var(--st-secondary);
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 13px;
+            transition: var(--st-transition);
+        }
+
+        .popup-link:hover {
+            background-color: #2980b9;
+        }
+
+        /* Filter Controls */
+        .filter-controls {
+            position: absolute;
+            top: 80px;
+            left: 340px;
+            z-index: 1000;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: var(--st-shadow);
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: var(--st-transition);
+        }
+
+        .filter-btn.active {
+            background-color: var(--st-secondary);
+            color: white;
+            border-color: var(--st-secondary);
+        }
+
+        .filter-btn:hover {
+            background-color: #f5f5f5;
+        }
+
+        .filter-btn.active:hover {
+            background-color: #2980b9;
+        }
+
+        /* Admin Report Panel */
+        .report-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            z-index: 1000;
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: var(--st-shadow);
+            width: 300px;
+            display: none; /* Hidden by default */
+        }
+
+        .report-panel h4 {
+            margin-bottom: 10px;
+            color: var(--st-primary);
+        }
+
+        .report-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .report-form select,
+        .report-form input,
+        .report-form textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .report-form textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .report-submit {
+            padding: 8px;
+            background-color: var(--st-secondary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--st-transition);
+        }
+
+        .report-submit:hover {
+            background-color: #2980b9;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .filter-controls {
+                left: 20px;
+                top: 140px;
+                flex-wrap: wrap;
+            }
+            
+            .search-container {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .st-nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 280px;
+                height: 100vh;
+                background-color: white;
+                flex-direction: column;
+                padding: 5rem 2rem 2rem;
+                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+                gap: 1.5rem;
+                align-items: flex-start;
+            }
+
+            .st-nav-links.active {
+                right: 0;
+            }
+
+            .st-hamburger {
+                display: block;
+            }
+
+            .st-hamburger.active span:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 6px);
+            }
+
+            .st-hamburger.active span:nth-child(2) {
+                opacity: 0;
+            }
+
+            .st-hamburger.active span:nth-child(3) {
+                transform: rotate(-45deg) translate(5px, -6px);
+            }
+
+            .st-login-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 0.8rem;
+            }
+            
+            .search-container {
+                top: 70px;
+                width: calc(100% - 40px);
+            }
+            
+            .filter-controls {
+                top: 130px;
+                width: calc(100% - 40px);
+            }
+            
+            .legend {
+                bottom: 100px;
+                max-width: calc(100% - 40px);
+            }
+            
+            .report-panel {
+                width: calc(100% - 40px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .st-navbar .st-container {
+                padding: 0 1rem;
+            }
+
+            .st-logo {
+                font-size: 1.5rem;
+            }
+
+            .st-logo i {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="st-navbar">
+        <div class="st-container">
+            <a href="#" class="st-logo">
+                <i class="fas fa-traffic-light"></i>
+                Smart<span>Traffic</span>
+            </a>
+            <div class="st-nav-links">
+                <a href="home.html">Home</a>
+                <a href="#" class="st-active">Live Map</a>
+                <a href="alerts.html">Alerts</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+                <a href="index.html" id="st-logoutBtn" class="st-login-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+            <button class="st-hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+        <div class="st-nav-overlay"></div>
+    </nav>
+
+    <!-- Map Container -->
+    <div class="map-container">
+        <div id="map"></div>
+        
+        <!-- Search Box -->
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search by area, signal ID, or road...">
+        </div>
+        
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="signals">Signals</button>
+            <button class="filter-btn" data-filter="accidents">Accidents</button>
+            <button class="filter-btn" data-filter="constructions">Constructions</button>
+        </div>
+        
+        <!-- Map Controls -->
+        <div class="map-controls">
+            <button class="control-btn" id="refresh-btn" title="Refresh Data">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="control-btn" id="admin-mode-btn" title="Admin Mode">
+                <i class="fas fa-user-shield"></i>
+            </button>
+            <button class="control-btn" id="locate-btn" title="Locate Me">
+                <i class="fas fa-location-arrow"></i>
+            </button>
+        </div>
+        
+        <!-- Legend -->
+        <div class="legend">
+            <h4>Map Legend</h4>
+            <div class="legend-item">
+                <div class="legend-icon signal-icon green"><i class="fas fa-traffic-light"></i></div>
+                <span>Signal (Green)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-icon signal-icon yellow"><i class="fas fa-traffic-light"></i></div>
+                <span>Signal (Yellow)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-icon signal-icon red"><i class="fas fa-traffic-light"></i></div>
+                <span>Signal (Red)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-icon accident-icon"><i class="fas fa-car-crash"></i></div>
+                <span>Accident</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-icon construction-icon"><i class="fas fa-person-digging"></i></div>
+                <span>Construction</span>
+            </div>
+        </div>
+        
+        <!-- Admin Report Panel (Hidden by default) -->
+        <div class="report-panel" id="report-panel">
+            <h4>Report New Issue</h4>
+            <form class="report-form">
+                <select id="report-type">
+                    <option value="accident">Accident</option>
+                    <option value="construction">Road Construction</option>
+                </select>
+                <input type="text" id="report-location" placeholder="Location (auto-filled)" readonly>
+                <textarea id="report-details" placeholder="Details..."></textarea>
+                <select id="report-severity" class="severity-select">
+                    <option value="low">Low Severity</option>
+                    <option value="medium">Medium Severity</option>
+                    <option value="high">High Severity</option>
+                </select>
+                <button type="button" class="report-submit">Submit Report</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the map centered on Chennai
+            const map = L.map('map').setView([13.0827, 80.2707], 13);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Sample data for traffic signals (in a real app, this would come from an API)
+            const trafficSignals = [
+                { id: 'TS001', name: 'Anna Nagar Junction', lat: 13.0865, lng: 80.2097, status: 'green', lastUpdated: '2023-11-15T10:30:00' },
+                { id: 'TS002', name: 'T Nagar Main Road', lat: 13.0349, lng: 80.2305, status: 'red', lastUpdated: '2023-11-15T10:32:00' },
+                { id: 'TS003', name: 'Egmore Station', lat: 13.0796, lng: 80.2598, status: 'yellow', lastUpdated: '2023-11-15T10:31:00' },
+                { id: 'TS004', name: 'Marina Beach Road', lat: 13.0568, lng: 80.2832, status: 'green', lastUpdated: '2023-11-15T10:29:00' },
+                { id: 'TS005', name: 'Guindy Industrial Estate', lat: 13.0086, lng: 80.2127, status: 'red', lastUpdated: '2023-11-15T10:33:00' }
+            ];
+            
+            // Sample data for accidents
+            const accidents = [
+                { id: 'AC001', location: 'Mount Road', lat: 13.0627, lng: 80.2547, time: '2023-11-15T10:15:00', severity: 'medium', reportedBy: 'Traffic Control #12' },
+                { id: 'AC002', location: 'OMR Near Tidel Park', lat: 12.9868, lng: 80.2439, time: '2023-11-15T09:45:00', severity: 'high', reportedBy: 'Traffic Patrol #5' }
+            ];
+            
+            // Sample data for constructions
+            const constructions = [
+                { id: 'CN001', location: 'Poonamallee High Road', lat: 13.0760, lng: 80.2204, startDate: '2023-11-10', endDate: '2023-11-25', detour: 'Use 2nd Avenue' },
+                { id: 'CN002', location: 'GST Road Near Airport', lat: 12.9810, lng: 80.1618, startDate: '2023-11-05', endDate: '2023-12-15', detour: 'Use Outer Ring Road' }
+            ];
+            
+            // Create marker layers
+            const signalMarkers = L.layerGroup();
+            const accidentMarkers = L.layerGroup();
+            const constructionMarkers = L.layerGroup();
+            
+            // Add traffic signals to map
+            trafficSignals.forEach(signal => {
+                let icon;
+                if (signal.status === 'green') {
+                    icon = L.divIcon({
+                        html: '<div class="signal-icon green"><i class="fas fa-traffic-light"></i></div>',
+                        className: '',
+                        iconSize: [30, 30]
+                    });
+                } else if (signal.status === 'yellow') {
+                    icon = L.divIcon({
+                        html: '<div class="signal-icon yellow"><i class="fas fa-traffic-light"></i></div>',
+                        className: '',
+                        iconSize: [30, 30]
+                    });
+                } else {
+                    icon = L.divIcon({
+                        html: '<div class="signal-icon red"><i class="fas fa-traffic-light"></i></div>',
+                        className: '',
+                        iconSize: [30, 30]
+                    });
+                }
+                
+                const marker = L.marker([signal.lat, signal.lng], { icon: icon })
+                    .bindPopup(`
+                        <div class="popup-title">${signal.name}</div>
+                        <div class="popup-status ${'status-' + signal.status}">${signal.status.toUpperCase()}</div>
+                        <div class="popup-details">
+                            <p><strong>ID:</strong> ${signal.id}</p>
+                            <p><strong>Last Updated:</strong> ${new Date(signal.lastUpdated).toLocaleString()}</p>
+                        </div>
+                        <a href="dashboard.html?signal=${signal.id}" class="popup-link">View Dashboard</a>
+                    `);
+                
+                signalMarkers.addLayer(marker);
+            });
+            
+            // Add accidents to map
+            accidents.forEach(accident => {
+                const icon = L.divIcon({
+                    html: '<div class="accident-icon"><i class="fas fa-car-crash"></i></div>',
+                    className: '',
+                    iconSize: [30, 30]
+                });
+                
+                const marker = L.marker([accident.lat, accident.lng], { icon: icon })
+                    .bindPopup(`
+                        <div class="popup-title">Accident Report</div>
+                        <div class="popup-details">
+                            <p><strong>Location:</strong> ${accident.location}</p>
+                            <p><strong>Time:</strong> ${new Date(accident.time).toLocaleString()}</p>
+                            <p><strong>Severity:</strong> ${accident.severity.toUpperCase()}</p>
+                            <p><strong>Reported By:</strong> ${accident.reportedBy}</p>
+                        </div>
+                    `);
+                
+                accidentMarkers.addLayer(marker);
+            });
+            
+            // Add constructions to map
+            constructions.forEach(construction => {
+                const icon = L.divIcon({
+                    html: '<div class="construction-icon"><i class="fas fa-person-digging"></i></div>',
+                    className: '',
+                    iconSize: [30, 30]
+                });
+                
+                const marker = L.marker([construction.lat, construction.lng], { icon: icon })
+                    .bindPopup(`
+                        <div class="popup-title">Road Construction</div>
+                        <div class="popup-details">
+                            <p><strong>Location:</strong> ${construction.location}</p>
+                            <p><strong>Duration:</strong> ${new Date(construction.startDate).toLocaleDateString()} to ${new Date(construction.endDate).toLocaleDateString()}</p>
+                            <p><strong>Detour:</strong> ${construction.detour}</p>
+                        </div>
+                    `);
+                
+                constructionMarkers.addLayer(marker);
+            });
+            
+            // Add all layers to map
+            signalMarkers.addTo(map);
+            accidentMarkers.addTo(map);
+            constructionMarkers.addTo(map);
+            
+            // Filter controls functionality
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    const filter = this.dataset.filter;
+                    
+                    // Show/hide layers based on filter
+                    if (filter === 'all') {
+                        map.addLayer(signalMarkers);
+                        map.addLayer(accidentMarkers);
+                        map.addLayer(constructionMarkers);
+                    } else if (filter === 'signals') {
+                        map.addLayer(signalMarkers);
+                        map.removeLayer(accidentMarkers);
+                        map.removeLayer(constructionMarkers);
+                    } else if (filter === 'accidents') {
+                        map.removeLayer(signalMarkers);
+                        map.addLayer(accidentMarkers);
+                        map.removeLayer(constructionMarkers);
+                    } else if (filter === 'constructions') {
+                        map.removeLayer(signalMarkers);
+                        map.removeLayer(accidentMarkers);
+                        map.addLayer(constructionMarkers);
+                    }
+                });
+            });
+            
+            // Refresh data button
+            document.getElementById('refresh-btn').addEventListener('click', function() {
+                // In a real app, this would fetch new data from the server
+                alert('Data refreshed! In a real application, this would fetch the latest data from the server.');
+            });
+            
+            // Locate me button
+            document.getElementById('locate-btn').addEventListener('click', function() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            map.flyTo([position.coords.latitude, position.coords.longitude], 15);
+                        },
+                        error => {
+                            alert('Unable to get your location: ' + error.message);
+                        }
+                    );
+                } else {
+                    alert('Geolocation is not supported by your browser');
+                }
+            });
+            
+            // Admin mode toggle
+            let adminMode = false;
+            const adminBtn = document.getElementById('admin-mode-btn');
+            const reportPanel = document.getElementById('report-panel');
+            
+            adminBtn.addEventListener('click', function() {
+                adminMode = !adminMode;
+                
+                if (adminMode) {
+                    this.innerHTML = '<i class="fas fa-user-shield"></i>';
+                    this.style.backgroundColor = '#e74c3c';
+                    this.style.color = 'white';
+                    reportPanel.style.display = 'block';
+                    
+                    // Enable click to report
+                    map.on('click', onMapClick);
+                } else {
+                    this.innerHTML = '<i class="fas fa-user-shield"></i>';
+                    this.style.backgroundColor = '';
+                    this.style.color = '';
+                    reportPanel.style.display = 'none';
+                    
+                    // Disable click to report
+                    map.off('click', onMapClick);
+                }
+            });
+            
+            // Map click handler for admin reporting
+            function onMapClick(e) {
+                document.getElementById('report-location').value = `Lat: ${e.latlng.lat.toFixed(4)}, Lng: ${e.latlng.lng.toFixed(4)}`;
+            }
+            
+            // Form submission for reporting
+            document.querySelector('.report-submit').addEventListener('click', function() {
+                const type = document.getElementById('report-type').value;
+                const location = document.getElementById('report-location').value;
+                const details = document.getElementById('report-details').value;
+                const severity = document.getElementById('report-severity').value;
+                
+                if (!location || !details) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+                
+                // In a real app, this would send data to the server
+                alert(`New ${type} reported at ${location}\nSeverity: ${severity}\nDetails: ${details}`);
+                
+                // Clear form
+                document.querySelector('.report-form').reset();
+                document.getElementById('report-location').value = '';
+            });
+            
+            // Search functionality
+            document.getElementById('search-input').addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase();
+                
+                if (query.length < 3) return;
+                
+                // Search in signals
+                const foundSignal = trafficSignals.find(signal => 
+                    signal.name.toLowerCase().includes(query) || 
+                    signal.id.toLowerCase().includes(query)
+                );
+                
+                if (foundSignal) {
+                    map.flyTo([foundSignal.lat, foundSignal.lng], 16);
+                    return;
+                }
+                
+                // Search in accidents
+                const foundAccident = accidents.find(accident => 
+                    accident.location.toLowerCase().includes(query)
+                );
+                
+                if (foundAccident) {
+                    map.flyTo([foundAccident.lat, foundAccident.lng], 16);
+                    return;
+                }
+                
+                // Search in constructions
+                const foundConstruction = constructions.find(construction => 
+                    construction.location.toLowerCase().includes(query)
+                );
+                
+                if (foundConstruction) {
+                    map.flyTo([foundConstruction.lat, foundConstruction.lng], 16);
+                    return;
+                }
+            });
+            
+            // Navigation menu toggle (same as other pages)
+            const hamburger = document.querySelector('.st-hamburger');
+            const navLinks = document.querySelector('.st-nav-links');
+            const navOverlay = document.querySelector('.st-nav-overlay');
+            
+            hamburger.addEventListener('click', function() {
+                this.classList.toggle('active');
+                navLinks.classList.toggle('active');
+                navOverlay.classList.toggle('active');
+                
+                if (navLinks.classList.contains('active')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            });
+            
+            navOverlay.addEventListener('click', function() {
+                hamburger.classList.remove('active');
+                navLinks.classList.remove('active');
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+            
+            navLinks.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        hamburger.classList.remove('active');
+                        navLinks.classList.remove('active');
+                        navOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+            
+            // Check if user is logged in
+            if (!sessionStorage.getItem('userToken')) {
+                window.location.href = 'index.html';
+            }
+            
+            // Logout button
+            document.getElementById('st-logoutBtn').addEventListener('click', function() {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
+</body>
+</html>

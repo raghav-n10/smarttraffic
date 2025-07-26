@@ -3,21 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Us</title>
-    <link rel="stylesheet" href="navigation_bar.css">
+    <title>SmartTraffic - Contact Us</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-        /* Rest of your existing styles... */
+    <style>
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
             --accent-color: #e74c3c;
             --light-color: #ecf0f1;
             --dark-color: #2c3e50;
-            --success-color: #2ecc71;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --info-color: #3498db;
             --text-color: #333;
             --text-light: #7f8c8d;
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -31,23 +25,143 @@
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
             color: var(--text-color);
             line-height: 1.6;
-            background-color: #f5f7fa;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background-color: white;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 0.8rem 0;
         }
 
         .container {
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 1.5rem;
+        }
+
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo span {
+            color: var(--secondary-color);
+        }
+
+        .logo i {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .nav-links a {
+            font-weight: 500;
+            transition: var(--transition);
+            padding: 0.5rem 0;
+            position: relative;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--secondary-color);
+        }
+
+        .nav-links a.active {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--secondary-color);
+            transform-origin: left;
+            animation: underline 0.3s ease forwards;
+        }
+
+        .login-btn {
+            background-color: var(--secondary-color);
+            color: white !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 5px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .login-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(41, 128, 185, 0.3);
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: var(--primary-color);
+            margin: 5px 0;
+            transition: var(--transition);
+            transform-origin: center;
+        }
+        
+        /* Animations */
+        @keyframes underline {
+            from {
+                transform: scaleX(0);
+            }
+            to {
+                transform: scaleX(1);
+            }
         }
 
         /* Contact Page Styles */
         .contact-section {
-            padding: 60px 0;
+            padding: 80px 0;
             background-color: white;
+            min-height: calc(100vh - 60px);
         }
 
         .section-title {
@@ -140,7 +254,7 @@
             padding: 12px 15px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             font-size: 1rem;
             transition: var(--transition);
         }
@@ -176,9 +290,236 @@
             background-color: #2980b9;
             transform: translateY(-2px);
         }
+
+        /* Footer Styles */
+        .traffic-footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 60px 0 20px;
+        }
+
+        .footer-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .footer-heading {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-heading::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background-color: #3498db;
+        }
+
+        .footer-description {
+            margin-bottom: 15px;
+            opacity: 0.8;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .footer-menu {
+            list-style: none;
+        }
+
+        .menu-item, .contact-item {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .menu-link {
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .menu-link:hover {
+            color: #3498db;
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .social-link:hover {
+            background-color: #3498db;
+            transform: translateY(-3px);
+        }
+
+        .contact-icon {
+            margin-right: 10px;
+            color: #3498db;
+            width: 20px;
+            text-align: center;
+        }
+
+        .footer-copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .copyright-text {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .contact-container {
+                gap: 30px;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .contact-section {
+                padding: 60px 0;
+            }
+            
+            .contact-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-form {
+                padding: 25px;
+            }
+            
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 280px;
+                height: 100vh;
+                background-color: white;
+                flex-direction: column;
+                padding: 5rem 2rem 2rem;
+                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+                gap: 1.5rem;
+                align-items: flex-start;
+            }
+
+            .nav-links.active {
+                right: 0;
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            .hamburger.active span:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 6px);
+            }
+
+            .hamburger.active span:nth-child(2) {
+                opacity: 0;
+            }
+
+            .hamburger.active span:nth-child(3) {
+                transform: rotate(-45deg) translate(5px, -6px);
+            }
+
+            .login-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 0.8rem;
+            }
+            
+            .footer-grid-layout {
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .contact-section {
+                padding: 50px 0;
+            }
+            
+            .section-title {
+                font-size: 1.8rem;
+            }
+            
+            .info-card {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .info-icon {
+                margin-bottom: 10px;
+            }
+            
+            .contact-form {
+                padding: 20px 15px;
+            }
+            
+            .form-group input,
+            .form-group textarea {
+                padding: 10px 12px;
+            }
+            
+            .submit-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .navbar .container {
+                padding: 0 1rem;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .logo i {
+                font-size: 1.3rem;
+            }
+            
+            .footer-grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="container">
             <a href="#" class="logo">
@@ -187,11 +528,14 @@
             </a>
             <div class="nav-links">
                 <a href="home.html">Home</a>
-                <a href="#">Live Map</a>
+                <a href="livemap.html">Live Map</a>
                 <a href="alerts.html">Alerts</a>
                 <a href="about.html">About</a>
                 <a href="contact.html" class="active">Contact</a>
-                <a href="index.html" id="logoutBtn" class="login-btn">Logout</a>
+                <a href="index.html" id="logoutBtn" class="login-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
             </div>
             <button class="hamburger">
                 <span></span>
@@ -199,7 +543,9 @@
                 <span></span>
             </button>
         </div>
+        <div class="nav-overlay"></div>
     </nav>
+
     <!-- Contact Section -->
     <section class="contact-section">
         <div class="container">
@@ -285,55 +631,50 @@
                         </button>
                     </form>
                 </div>
-                
-                <div class="map-container">
-                    <div id="contactMap"></div>
-                </div>
             </div>
         </div>
     </section>
+
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <h3>SmartTraffic</h3>
-                    <p>Advanced traffic management solutions for modern cities.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
-                        <a href="#"><i class="fab fa-github"></i></a>
+    <footer class="traffic-footer">
+        <div class="footer-container">
+            <div class="footer-grid-layout">
+                <div class="footer-about">
+                    <h3 class="footer-heading">SmartTraffic</h3>
+                    <p class="footer-description">Advanced traffic management solutions for modern cities.</p>
+                    <div class="footer-socials">
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-github"></i></a>
                     </div>
                 </div>
-                <div class="footer-col">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="home.html">Home</a></li>
-                        <li><a href="#">Live Map</a></li>
-                        <li><a href="#">Alerts</a></li>
+                <div class="footer-links">
+                    <h3 class="footer-heading">Quick Links</h3>
+                    <ul class="footer-menu">
+                        <li class="menu-item"><a href="home.html" class="menu-link">Home</a></li>
+                        <li class="menu-item"><a href="#" class="menu-link">Live Map</a></li>
+                        <li class="menu-item"><a href="alerts.html" class="menu-link">Alerts</a></li>
                     </ul>
                 </div>
-                <div class="footer-col">
-                    <h3>Information</h3>
-                    <ul>
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="contact.html">Contact</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
+                <div class="footer-info">
+                    <h3 class="footer-heading">Information</h3>
+                    <ul class="footer-menu">
+                        <li class="menu-item"><a href="about.html" class="menu-link">About Us</a></li>
+                        <li class="menu-item"><a href="contact.html" class="menu-link">Contact</a></li>
                     </ul>
                 </div>
-                <div class="footer-col">
-                    <h3>Contact Us</h3>
-                    <ul>
-                        <li><i class="fas fa-map-marker-alt"></i> 123 Traffic Ave, Smart City</li>
-                        <li><i class="fas fa-phone"></i> (555) 123-4567</li>
-                        <li><i class="fas fa-envelope"></i> info@smarttraffic.example</li>
+                <div class="footer-contact">
+                    <h3 class="footer-heading">Contact Us</h3>
+                    <ul class="footer-menu">
+                        <li class="contact-item"><i class="fas fa-map-marker-alt contact-icon"></i> 123 Traffic Ave, Smart City</li>
+                        <li class="contact-item"><i class="fas fa-phone contact-icon"></i> (555) 123-4567</li>
+                        <li class="contact-item"><i class="fas fa-envelope contact-icon"></i> info@smarttraffic.example</li>
                     </ul>
                 </div>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 SmartTraffic Control System. All rights reserved.</p>
+            <div class="footer-copyright">
+                <p class="copyright-text">&copy; 2025 SmartTraffic Control System. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -342,11 +683,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             const hamburger = document.querySelector('.hamburger');
             const navLinks = document.querySelector('.nav-links');
+            const navOverlay = document.querySelector('.nav-overlay');
             
             // Toggle mobile menu
             hamburger.addEventListener('click', function() {
                 this.classList.toggle('active');
                 navLinks.classList.toggle('active');
+                navOverlay.classList.toggle('active');
                 
                 // Toggle body scroll when menu is open
                 if (navLinks.classList.contains('active')) {
@@ -356,12 +699,21 @@
                 }
             });
             
+            // Close menu when clicking on overlay
+            navOverlay.addEventListener('click', function() {
+                hamburger.classList.remove('active');
+                navLinks.classList.remove('active');
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+            
             // Close menu when clicking on a link (mobile)
             navLinks.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', function() {
                     if (window.innerWidth <= 768) {
                         hamburger.classList.remove('active');
                         navLinks.classList.remove('active');
+                        navOverlay.classList.remove('active');
                         document.body.style.overflow = '';
                     }
                 });
@@ -376,22 +728,17 @@
                     this.reset();
                 });
             }
-        });
-    </script>
-        <script src="session.js"></script>
-    <script>
-        // Check if user is logged in
-        if (!sessionStorage.getItem('userToken')) {
-            window.location.href = 'login.html';
-        } else {
-            document.getElementById('userName').textContent = 
-                sessionStorage.getItem('userName') || 'User';
-        }
-        
-        // Logout button
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            sessionStorage.clear();
-            window.location.href = 'login.html';
+            
+            // Check if user is logged in
+            if (!sessionStorage.getItem('userToken')) {
+                window.location.href = 'index.html';
+            }
+            
+            // Logout button
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+            });
         });
     </script>
 </body>
