@@ -878,4 +878,160 @@
         function addAlert(message, severity = 'info') {
             const alertsList = document.getElementById('alertsList');
             const now = new Date();
-            const
+            const timeString = now.toLocaleTimeString();
+            
+            let alertClass = '';
+            let icon = '';
+            
+            switch(severity) {
+                case 'info':
+                    alertClass = 'alert-info';
+                    icon = 'info-circle';
+                    break;
+                case 'warning':
+                    alertClass = 'alert-medium';
+                    icon = 'exclamation-triangle';
+                    break;
+                case 'error':
+                    alertClass = 'alert-high';
+                    icon = 'times-circle';
+                    break;
+                case 'success':
+                    alertClass = 'alert-low';
+                    icon = 'check-circle';
+                    break;
+            }
+            
+            const alertItem = document.createElement('div');
+            alertItem.className = `list-group-item ${alertClass}`;
+            alertItem.innerHTML = `
+                <div class="d-flex justify-content-between">
+                    <strong>${message}</strong>
+                    <small>${timeString}</small>
+                </div>
+            `;
+            
+            alertsList.insertBefore(alertItem, alertsList.firstChild);
+            
+            // Limit to 10 alerts
+            if (alertsList.children.length > 10) {
+                alertsList.removeChild(alertsList.lastChild);
+            }
+        }
+        
+        // Reset all traffic lights
+        function resetAllLights() {
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const color = ['red', 'yellow', 'green'][j];
+                    document.getElementById(`signal${i+1}-${color}`).classList.remove('active');
+                }
+            }
+        }
+        
+        // Set lane color
+        function setLaneColor(lane, color) {
+            resetAllLights();
+            const colorIndex = ['red', 'yellow', 'green'].indexOf(color);
+            if (colorIndex >= 0) {
+                document.getElementById(`signal${lane+1}-${color}`).classList.add('active');
+            }
+        }
+        
+        // Set other lanes to red
+        function setOtherLanesRed(activeLane) {
+            for (let i = 0; i < 4; i++) {
+                if (i !== activeLane) {
+                    setLaneColor(i, 'red');
+                }
+            }
+        }
+        
+        // Display countdown for a lane
+        function displayCountdown(lane, seconds) {
+            const signalElement = document.getElementById(`signal${lane+1}-green`);
+            let remaining = seconds;
+            
+            const countdownInterval = setInterval(() => {
+                if (remaining > 0) {
+                    remaining--;
+                    // Update display if needed
+                } else {
+                    clearInterval(countdownInterval);
+                    // Transition to yellow
+                    setLaneColor(lane, 'yellow');
+                    
+                    // After 3 seconds, transition to red
+                    setTimeout(() => {
+                        setLaneColor(lane, 'red');
+                    }, 3000);
+                }
+            }, 1000);
+        }
+        
+        // Simulate data updates (in a real app, this would come from the backend)
+        function simulateDataUpdates() {
+            // Update time every second
+            setInterval(updateTime, 1000);
+            
+            // Update vehicle counts and signal timings
+            setInterval(() => {
+                cycleCount++;
+                document.getElementById('currentCycle').textContent = cycleCount;
+                
+                // Simulate vehicle detection updates
+                const totalVehicles = vehicleCounts.reduce((a, b) => a + b, 0);
+                document.getElementById('vehiclesDetected').textContent = totalVehicles;
+                
+                // Update lane counts with realistic fluctuations
+                for (let i = 0; i < vehicleCounts.length; i++) {
+                    // Base traffic pattern - more traffic during "daytime"
+                    const hour = new Date().getHours();
+                    const isPeak = (hour >= 8 && hour <= 10) || (hour >= 17 && hour <= 19);
+                    const base = isPeak ? Math.floor(Math.random() * 15) + 5 : Math.floor(Math.random() * 8) + 2;
+                    
+                    // Add some randomness
+                    vehicleCounts[i] = Math.max(0, base + Math.floor(Math.random() * 5) - 2);
+                    document.getElementById(`lane${i+1}-count`).textContent = vehicleCounts[i];
+                }
+                
+                // Update signal timings based on vehicle counts (AI mode logic)
+                if (currentMode === 'ai') {
+                    // Calculate weights for each signal (group of 4 lanes)
+                    const signalWeights = [];
+                    for (let i = 0; i < 4; i++) {
+                        const startIdx = i * 4;
+                        const weight = vehicleCounts[startIdx] + vehicleCounts[startIdx+1] + 
+                                      vehicleCounts[startIdx+2] + vehicleCounts[startIdx+3];
+                        signalWeights.push(weight);
+                    }
+                    
+                    // Calculate total weight
+                    const totalWeight = signalWeights.reduce((a, b) => a + b, 0);
+                    
+                    // Calculate recommended timings (minimum 15s, maximum 90s)
+                    for (let i = 0; i < 4; i++) {
+                        if (totalWeight > 0) {
+                            signalTimings[i] = Math.max(15, Math.min(90, 
+                                Math.round((signalWeights[i] / totalWeight) * 120)));
+                        } else {
+                            signalTimings[i] = 30; // Default when no vehicles
+                        }
+                        document.getElementById(`signal${i+1}-timing`).textContent = `${signalTimings[i]}s`;
+                    }
+                    
+                    // Update the timing chart
+                    window.timingChart.data.datasets[0].data = signalTimings;
+                    window.timingChart.update();
+                } else if (currentMode === 'traditional') {
+                    // Fixed timings for traditional mode
+                    const fixedTimings = [60, 5, 45, 5]; // Red, Yellow, Green, Yellow
+                    for (let i = 0; i < 4; i++) {
+                        document.getElementById(`signal${i+1}-timing`).textContent = `${fixedTimings[i]}s`;
+                    }
+                }
+            }, 3000); // Update every 3 seconds
+        }
+    </script>
+</body>
+</html>
